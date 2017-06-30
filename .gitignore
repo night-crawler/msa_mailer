@@ -1,0 +1,27 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Directories
+.idea
+.cache
+frontend/static/frontend/bower_components/*
+/static/
+
+# Sphinx built documentation
+docs/_build/
+
+# Translations
+*.mo
+
+# Generated
+gen_admin.py
+
+# settings
+secret_settings.py
+local_settings.py
+/docker/data/postgresql/
+/msa_mailer/data/dbmail.json
+
+celerybeat-schedule*

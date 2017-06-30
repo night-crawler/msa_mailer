@@ -1,0 +1,59 @@
+version: "2"
+services:
+
+  msa-mailer-web:
+    image: ncrawler/msa_mailer:latest
+    container_name: msa-mailer-web
+    hostname: msa-mailer-web
+    depends_on:
+      - postgres
+      - redis
+    links:
+      - postgres
+      - redis
+    volumes:
+      - .:/application/msa_mailer
+      - static:/application/msa_mailer/static
+    command: gunicorn
+    ports:
+      - 21115:8000
+    environment:
+      CHECK_CONNECTIONS: 1
+      RUN_PREPARE: 1  # run collectstatic & migrate
+      DJANGO_CONFIG_FILE_NAME: within-docker.yml
+      GUNICORN_MODULE_NAME: 'gunicorn_prod'
+      VIRTUAL_HOST: mailer.test
+
+  msa-mailer-worker:
+    image: ncrawler/msa_mailer:latest
+    container_name: msa-mailer-worker
+    hostname: msa-mailer-worker
+
+    command: celery
+    volumes_from:
+      - msa-mailer-web
+    depends_on:
+      - msa-mailer-web
+    environment:
+      CHECK_CONNECTIONS: 1
+      DJANGO_CONFIG_FILE_NAME: 'within-docker.yml'
+
+  postgres:
+    image: postgres:10-alpine
+    container_name: msa-mailer-postgres
+    hostname: msa-mailer-postgres
+
+    command: "postgres -c fsync=off -c full_page_writes=off -c synchronous_commit=OFF"
+    volumes:
+      - ./docker/configs/postgresql/pg_init.sql:/docker-entrypoint-initdb.d/pg_init.sql
+      - ./docker/data/postgresql:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: DoNotBreakItPlease
+
+  redis:
+    container_name: msa-mailer-redis
+    hostname: msa-mailer-redis
+    image: redis:4-alpine
+
+volumes:
+  static: {}
