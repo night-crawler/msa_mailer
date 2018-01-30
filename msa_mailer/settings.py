@@ -1,10 +1,13 @@
 import os
 import socket
 import sys
+import warnings
 
 from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django_docker_helpers.config import ConfigLoader, YamlParser, EnvironmentParser
+from django_docker_helpers.utils import env_bool_flag
+
 from yaml import load
 
 from . import __version__
@@ -39,13 +42,6 @@ for path in [
     if not os.path.exists(path):
         os.makedirs(path, mode=0o755, exist_ok=True)
 
-if not os.path.exists(SECRET_SETTINGS_FILE):
-    with open(SECRET_SETTINGS_FILE, 'w') as f:
-        from django.utils.crypto import get_random_string
-
-        f.write("SECRET_KEY = '%s'\n" % get_random_string(50))
-        f.close()
-
 # ------------------------------ LOAD YAML CONFIG -----------------------------
 _config_name = os.environ.get('DJANGO_CONFIG_FILE_NAME', 'without-docker.yml')
 config_path = os.path.join(BASE_DIR, 'msa_mailer', 'config', _config_name)
@@ -68,14 +64,15 @@ SUPERUSER = {
     'password': config.get('superuser.password'),
 }
 
-# --------------- SECRET SETTINGS ---------------
-from .secret_settings import *  # noqa
-
-SECRET_KEY = config.get('secret_key', SECRET_KEY)
-
-# --------------- HOSTS ---------------
 DEBUG = config.get('debug', False)
 
+# --------------- SECRET SETTINGS ---------------
+SECRET_KEY = config.get('common.secret_key', 'secret')
+
+if SECRET_KEY == 'secret':
+    warnings.warn('SECRET_KEY is not assigned! Production unsafe!')
+
+# --------------- HOSTS ---------------
 HOSTNAME = socket.gethostname()
 
 ALLOWED_HOSTS = [
@@ -120,13 +117,19 @@ MIDDLEWARE_CLASSES = [
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-
 ]
 
 STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+if not env_bool_flag('SERVE_STATIC'):
+    STATICFILES_STORAGE = None
+    MIDDLEWARE_CLASSES.remove('whitenoise.middleware.WhiteNoiseMiddleware')
+
 
 TEMPLATES = [
     {

@@ -46,3 +46,6 @@ superuser:
   email: 'admin@example.com'
 
 debug: true
+
+common:
+  secret_key: 'secret'

@@ -21,8 +21,9 @@ services:
       CHECK_CONNECTIONS: 1
       RUN_PREPARE: 1  # run collectstatic & migrate
       DJANGO_CONFIG_FILE_NAME: within-docker.yml
-      GUNICORN_MODULE_NAME: 'gunicorn_prod'
+      GUNICORN_MODULE_NAME: gunicorn_prod
       VIRTUAL_HOST: mailer.test
+      SERVE_STATIC: 1
 
   msa-mailer-worker:
     image: ncrawler/msa_mailer:latest
@@ -30,13 +31,13 @@ services:
     hostname: msa-mailer-worker
 
     command: celery
-    volumes_from:
-      - msa-mailer-web
+    volumes:
+      - .:/application/msa_mailer
     depends_on:
       - msa-mailer-web
     environment:
       CHECK_CONNECTIONS: 1
-      DJANGO_CONFIG_FILE_NAME: 'within-docker.yml'
+      DJANGO_CONFIG_FILE_NAME: within-docker.yml
 
   postgres:
     image: postgres:10-alpine
