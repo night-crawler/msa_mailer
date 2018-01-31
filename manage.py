@@ -9,7 +9,6 @@ from django_docker_helpers.files import collect_static
 from django_docker_helpers.management import create_admin, run_gunicorn
 from django_docker_helpers.utils import env_bool_flag
 
-from msa_mailer.wsgi import application
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'msa_mailer.settings')
@@ -26,6 +25,10 @@ if __name__ == '__main__':
 
     if len(sys.argv) == 2:
         if sys.argv[1] == 'gunicorn':
+            # this import should be local, otherwise whitenoise gets
+            # settings initialized before static files were not collected
+            # other way is to use execvp
+            from msa_mailer.wsgi import application
             gunicorn_module_name = os.getenv('GUNICORN_MODULE_NAME', 'gunicorn_dev')
             run_gunicorn(application, gunicorn_module_name=gunicorn_module_name)
             exit(0)

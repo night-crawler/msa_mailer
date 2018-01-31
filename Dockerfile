@@ -20,20 +20,16 @@ RUN apt-get update \
  && apt-get autoclean \
  && apt-get clean
 
-#RUN apk update && apk upgrade && pip install wheel \
-#  && apk add --virtual build-deps gcc python3-dev musl-dev postgresql-dev git \
-#  && apk add libpq hiredis geoip geoip-dev
-
 WORKDIR /application/msa_mailer
 ADD requirements.txt /application/msa_mailer
 ADD requirements /application/msa_mailer/requirements
 RUN pip install --src /usr/local/src --no-cache-dir -r requirements/prod.txt
 
-ADD . /application/msa_mailer
-
 RUN apt-get remove --purge --assume-yes $BUILD_DEPS && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get autoremove --assume-yes
+
+ADD . /application/msa_mailer
 
 # create static to prevent root owning of the static volume
 # https://github.com/docker/compose/issues/3270#issuecomment-206214034

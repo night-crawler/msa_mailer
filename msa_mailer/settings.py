@@ -25,14 +25,11 @@ __LOCALE_PATH = os.path.abspath(os.path.join(ROOT_PATH, 'locale'))
 VIRTUAL_ENV_DIR = os.path.abspath(os.path.join(BASE_DIR, os.path.pardir))
 
 STATIC_ROOT = os.path.join(ROOT_PATH, 'static')
-STATIC_URL = '/static/'
 MEDIA_ROOT = os.path.join(ROOT_PATH, 'media')
-MEDIA_URL = '/media/'
 
 CKEDITOR_UPLOAD_PATH = os.path.join(MEDIA_ROOT, 'uploads')
 
 LOCAL_SETTINGS_FILE = os.path.join(BASE_DIR, PROJECT_NAME, 'local_settings.py')
-SECRET_SETTINGS_FILE = os.path.join(BASE_DIR, PROJECT_NAME, 'secret_settings.py')
 
 # --------------- GENERATORS ---------------
 for path in [
@@ -46,30 +43,29 @@ _config_name = os.environ.get('DJANGO_CONFIG_FILE_NAME', 'without-docker.yml')
 config_path = os.path.join(BASE_DIR, 'msa_mailer', 'config', _config_name)
 
 os.environ.setdefault('YAMLPARSER__CONFIG', config_path)
-config = ConfigLoader.from_env(
+configure = ConfigLoader.from_env(
     extra={'endpoint': 'msa/mailer/config.yml'},
     suppress_logs=True,
     silent=True,
 )
 # -----------------------------------------------------------------------------
+DEBUG = configure('debug', False, coerce_type=bool)
 
-COMMON_BASE_HOST = config.get('common.base.host', 'mailer.test')
-COMMON_BASE_PORT = config.get('common.base.port', 8000)  # 8282 etc
-COMMON_BASE_SCHEME = config.get('common.base.scheme', 'http')  # Either 'http' or 'https'
+COMMON_BASE_HOST = configure('common.base.host', 'mailer.test')
+COMMON_BASE_PORT = configure('common.base.port', 8000)  # 8282 etc
+COMMON_BASE_SCHEME = configure('common.base.scheme', 'http')  # Either 'http' or 'https'
+
+SECRET_KEY = configure('common.secret_key', 'secret')
+SECRET_KEY == 'secret' and warnings.warn('SECRET_KEY is not assigned! Production unsafe!')
+
+STATIC_URL = configure('static_url', '/static/')
+MEDIA_URL = configure('media_url', '/media/')
 
 SUPERUSER = {
-    'username': config.get('superuser.username'),
-    'email': config.get('superuser.email'),
-    'password': config.get('superuser.password'),
+    'username': configure('superuser.username'),
+    'email': configure('superuser.email'),
+    'password': configure('superuser.password'),
 }
-
-DEBUG = config.get('debug', False)
-
-# --------------- SECRET SETTINGS ---------------
-SECRET_KEY = config.get('common.secret_key', 'secret')
-
-if SECRET_KEY == 'secret':
-    warnings.warn('SECRET_KEY is not assigned! Production unsafe!')
 
 # --------------- HOSTS ---------------
 HOSTNAME = socket.gethostname()
@@ -77,7 +73,7 @@ HOSTNAME = socket.gethostname()
 ALLOWED_HOSTS = [
     HOSTNAME,
     '127.0.0.1',
-] + config.get('hosts', [])
+] + configure('hosts', [])
 
 # --------------- DJANGO STANDARD ---------------
 INSTALLED_APPS = [
@@ -152,15 +148,15 @@ WSGI_APPLICATION = 'msa_mailer.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': config.get('db.name', 'django.db.backends.postgresql'),
-        'HOST': config.get('db.host', 'localhost'),
-        'PORT': config.get('db.port', ''),
+        'ENGINE': configure('db.name', 'django.db.backends.postgresql'),
+        'HOST': configure('db.host', 'localhost'),
+        'PORT': configure('db.port', ''),
 
-        'NAME': config.get('db.database', 'msa_mailer'),
-        'USER': config.get('db.user', 'msa_mailer'),
-        'PASSWORD': config.get('db.password', 'msa_mailer'),
+        'NAME': configure('db.database', 'msa_mailer'),
+        'USER': configure('db.user', 'msa_mailer'),
+        'PASSWORD': configure('db.password', 'msa_mailer'),
 
-        'CONN_MAX_AGE': config.get('db.conn_max_age', 60, coerce_type=int),
+        'CONN_MAX_AGE': configure('db.conn_max_age', 60, coerce_type=int),
     }
 }
 
@@ -168,7 +164,7 @@ CACHES = {
     'default': {
         'KEY_PREFIX': 'msa_mailer',
         'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': config.get('cache.locations', ['localhost:6379']),
+        'LOCATION': configure('cache.locations', ['localhost:6379']),
         'OPTIONS': {
             'DB': 8,
             'PARSER_CLASS': 'redis.connection.HiredisParser',
@@ -213,33 +209,33 @@ MODELTRANSLATION_TRANSLATION_FILES = (
     'dbmail.translation',
 )
 
-TIME_ZONE = 'UTC'
-USE_I18N = True
-USE_L10N = True
-USE_TZ = True
+TIME_ZONE = configure('time_zone', 'UTC')
+USE_I18N = configure('use_i18n', True)
+USE_L10N = configure('use_l10n', True)
+USE_TZ = configure('use_tz', True)
 
-SERVER_EMAIL = config.get('mail.server_email')
-EMAIL_USE_TLS = config.get('mail.tls')
-EMAIL_BACKEND = config.get('mail.backend', 'django.core.mail.backends.smtp.EmailBackend')
-DEFAULT_FROM_EMAIL = config.get('mail.from', 'noreply@example.com')
+SERVER_EMAIL = configure('mail.server_email')
+EMAIL_USE_TLS = configure('mail.tls')
+EMAIL_BACKEND = configure('mail.backend', 'django.core.mail.backends.smtp.EmailBackend')
+DEFAULT_FROM_EMAIL = configure('mail.from', 'noreply@example.com')
 
-EMAIL_HOST = config.get('mail.host', 'example.com')
-EMAIL_PORT = config.get('mail.port', 587)
-EMAIL_HOST_USER = config.get('mail.user', 'example')
-EMAIL_HOST_PASSWORD = config.get('mail.password', '')
+EMAIL_HOST = configure('mail.host', 'example.com')
+EMAIL_PORT = configure('mail.port', 587, coerce_type=int)
+EMAIL_HOST_USER = configure('mail.user', 'example')
+EMAIL_HOST_PASSWORD = configure('mail.password', '')
 
 # --------------- BATTERIES ---------------
-DB_MAILER_ENABLE_LOGGING = config.get('dbmailer.enable_logging', False)
-DB_MAILER_READ_ONLY_ENABLED = config.get('dbmailer.read_only_enabled', False)
-DB_MAILER_TRACK_ENABLE = config.get('dbmailer.track_enable', True)
-DB_MAILER_USE_CELERY_FOR_ADMIN_TEST = config.get('dbmailer.use_celery_for_admin_test', False)
-DB_MAILER_SHOW_CONTEXT = config.get('dbmailer.show_context', False)
+DB_MAILER_ENABLE_LOGGING = configure('dbmailer.enable_logging', False)
+DB_MAILER_READ_ONLY_ENABLED = configure('dbmailer.read_only_enabled', False)
+DB_MAILER_TRACK_ENABLE = configure('dbmailer.track_enable', True)
+DB_MAILER_USE_CELERY_FOR_ADMIN_TEST = configure('dbmailer.use_celery_for_admin_test', False)
+DB_MAILER_SHOW_CONTEXT = configure('dbmailer.show_context', False)
 
 # django-db-mailer celery
-BROKER_URL = config.get('celery.broker', 'redis://127.0.0.1:6379/1')
+BROKER_URL = configure('celery.broker', 'redis://127.0.0.1:6379/1')
 
 # CELERY
-CELERY_RESULT_BACKEND = config.get('celery.result_backend', 'redis://127.0.0.1:6379/15')
+CELERY_RESULT_BACKEND = configure('celery.result_backend', 'redis://127.0.0.1:6379/15')
 CELERY_ACCEPT_CONTENT = ['pickle']
 CELERY_ACKS_LATE = True
 CELERYD_PREFETCH_MULTIPLIER = 1
@@ -251,19 +247,19 @@ if 'mail_messages' in sys.argv:
 CELERY_TASK_SERIALIZER = 'pickle'
 CELERY_DEFAULT_QUEUE = 'default'
 
-CELERY_WORKERS = config.get('celery.workers', 1)
+CELERY_WORKERS = configure('celery.workers', 1)
 
 # RAVEN
-if config.get('raven', False) and config.get('raven.dsn', None):
+if configure('raven.dsn', None):
     import raven  # noqa
 
     INSTALLED_APPS += ['raven.contrib.django.raven_compat']
     RAVEN_CONFIG = {
-        'dsn': config.get('raven.dsn', None),
+        'dsn': configure('raven.dsn', None),
         'release': __version__,
     }
 
-
+# ckeditor
 CKEDITOR_CONFIGS = {
     'default': {
         'toolbar': 'full',
@@ -276,10 +272,18 @@ CKEDITOR_CONFIGS = {
     },
 }
 
+# SERVE STATIC
+if configure('SERVE_STATIC', False, coerce_type=bool):
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+    insert_idx = MIDDLEWARE_CLASSES.index('django.middleware.security.SecurityMiddleware') + 1
+    MIDDLEWARE_CLASSES[insert_idx:insert_idx] = ['whitenoise.middleware.WhiteNoiseMiddleware']
+
+
 # REDEFINE
 try:
     from .local_settings import *  # noqa
 except ImportError:
     pass
 
-config.print_config_read_queue(use_color=True)
+configure.print_config_read_queue(use_color=True)
