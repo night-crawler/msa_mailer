@@ -6,7 +6,6 @@ import warnings
 from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
 from django_docker_helpers.config import ConfigLoader, YamlParser, EnvironmentParser
-from django_docker_helpers.utils import env_bool_flag
 
 from yaml import load
 
@@ -107,8 +106,6 @@ ROOT_URLCONF = 'msa_mailer.urls'
 MIDDLEWARE_CLASSES = [
     'django.middleware.security.SecurityMiddleware',
 
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-
     'django.middleware.locale.LocaleMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -123,13 +120,6 @@ STATICFILES_FINDERS = (
     'django.contrib.staticfiles.finders.FileSystemFinder',
     'django.contrib.staticfiles.finders.AppDirectoriesFinder',
 )
-
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-if not env_bool_flag('SERVE_STATIC'):
-    STATICFILES_STORAGE = None
-    MIDDLEWARE_CLASSES.remove('whitenoise.middleware.WhiteNoiseMiddleware')
-
 
 TEMPLATES = [
     {
@@ -292,4 +282,4 @@ try:
 except ImportError:
     pass
 
-config.print_config_read_queue(color=True)
+config.print_config_read_queue(use_color=True)
