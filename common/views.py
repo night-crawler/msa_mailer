@@ -1,6 +1,7 @@
-from dbmail.views import send_by_dbmail
-from django.http import HttpResponse, HttpRequest
+from django.http import HttpRequest, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
+
+from dbmail.views import send_by_dbmail
 
 from common.models import BlacklistRecipient
 

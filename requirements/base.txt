@@ -23,7 +23,13 @@ gunicorn
 uwsgi
 django-uwsgi
 raven
-psycopg2
+psycopg2-binary
 httpagentparser
 django-ipware
 whitenoise
+
+# logging
+structlog
+colorama
+graypy
+setproctitle

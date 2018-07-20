@@ -1,3 +1,4 @@
+import logging
 import os
 import socket
 import sys
@@ -5,8 +6,11 @@ import warnings
 
 from django.core.urlresolvers import reverse_lazy
 from django.utils.translation import ugettext_lazy as _
-from django_docker_helpers.config import ConfigLoader, YamlParser, EnvironmentParser
 
+import structlog
+from django_docker_helpers.config import (
+    ConfigLoader, EnvironmentParser, YamlParser
+)
 from yaml import load
 
 from . import __version__
@@ -279,6 +283,92 @@ if configure('SERVE_STATIC', False, coerce_type=bool):
     insert_idx = MIDDLEWARE_CLASSES.index('django.middleware.security.SecurityMiddleware') + 1
     MIDDLEWARE_CLASSES[insert_idx:insert_idx] = ['whitenoise.middleware.WhiteNoiseMiddleware']
 
+
+# ======================================== LOGGING ========================================
+
+timestamper = structlog.processors.TimeStamper(fmt='iso')
+pre_chain = [
+    structlog.stdlib.add_logger_name,
+    structlog.stdlib.add_log_level,
+    timestamper,
+]
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'filters': {
+        'static_fields': {
+            '()': 'msa_mailer.logging.filters.StaticFieldFilter',
+            'fields': {
+                'project': 'MSA Mailer',
+                'version': __version__,
+                'environment': configure('environment', 'dev'),
+            },
+        },
+    },
+
+    'formatters': {
+        'colored': {
+            '()': structlog.stdlib.ProcessorFormatter,
+            'processor': structlog.dev.ConsoleRenderer(colors=True),
+            'foreign_pre_chain': pre_chain,
+        },
+    },
+    'handlers': {
+        'default': {
+            'class': 'logging.StreamHandler',
+            'formatter': 'colored',
+        },
+        'gelf': {
+            'class': 'graypy.GELFHandler',
+            'host': configure('gelf.host', '127.0.0.1'),
+            'port': configure('gelf.port', 12201, coerce_type=int),
+            'filters': ['static_fields'],
+        },
+    },
+    'loggers': {
+        '': {
+            'level': 'DEBUG',
+            'handlers': ['default', 'gelf'],
+            'propagate': False,
+        },
+        'django': {
+            'level': 'INFO',
+            'handlers': ['default'],
+            'propagate': False,
+        },
+    }
+}
+
+
+def graypy_structlog_processor(logger, method_name, event_dict):
+    args = (event_dict.get('event', ''),)
+    kwargs = {'extra': event_dict}
+    return args, kwargs
+
+
+structlog.configure_once(
+    processors=[
+        structlog.stdlib.filter_by_level,
+        structlog.stdlib.add_logger_name,
+        structlog.stdlib.add_log_level,
+        structlog.stdlib.PositionalArgumentsFormatter(),
+        timestamper,
+        structlog.processors.StackInfoRenderer(),
+        structlog.processors.format_exc_info,
+        structlog.processors.UnicodeDecoder(),
+        # structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
+        # structlog.processors.JSONRenderer(),
+        graypy_structlog_processor
+    ],
+    context_class=structlog.threadlocal.wrap_dict(dict),
+    logger_factory=structlog.stdlib.LoggerFactory(),
+    wrapper_class=structlog.stdlib.BoundLogger,
+    cache_logger_on_first_use=True,
+)
+
+# ====================================================================================
 
 # REDEFINE
 try:
