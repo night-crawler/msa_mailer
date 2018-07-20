@@ -3,12 +3,14 @@ import os
 import sys
 
 from django.conf import settings
-from django_docker_helpers.db import ensure_databases_alive, ensure_caches_alive, migrate, \
+
+from django_docker_helpers.db import (
+    ensure_caches_alive, ensure_databases_alive, migrate,
     modeltranslation_sync_translation_fields
+)
 from django_docker_helpers.files import collect_static
 from django_docker_helpers.management import create_admin, run_gunicorn
 from django_docker_helpers.utils import env_bool_flag
-
 
 if __name__ == '__main__':
     os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'msa_mailer.settings')

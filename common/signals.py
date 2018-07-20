@@ -1,8 +1,9 @@
 import re
 
-from dbmail.models import MailTemplate
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
+
+from dbmail.models import MailTemplate
 
 broken_rx = re.compile(r'')
 

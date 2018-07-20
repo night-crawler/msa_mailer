@@ -1,10 +1,11 @@
 import os
 
+from django.conf import settings  # noqa
+
 from celery import Celery
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'msa_mailer.settings')
 
-from django.conf import settings  # noqa
 
 app = Celery('msa_mailer')
 
