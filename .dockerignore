@@ -13,3 +13,4 @@ docker/
 /msa_mailer/data/dbmail.json
 
 celerybeat-schedule*
+local_settings.py
