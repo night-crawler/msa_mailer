@@ -152,11 +152,11 @@ WSGI_APPLICATION = 'msa_mailer.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': configure('db.name', 'django.db.backends.postgresql'),
+        'ENGINE': configure('db.engine', 'django.db.backends.postgresql'),
         'HOST': configure('db.host', 'localhost'),
         'PORT': configure('db.port', ''),
 
-        'NAME': configure('db.database', 'msa_mailer'),
+        'NAME': configure('db.name', 'msa_mailer'),
         'USER': configure('db.user', 'msa_mailer'),
         'PASSWORD': configure('db.password', 'msa_mailer'),
 
@@ -168,7 +168,7 @@ CACHES = {
     'default': {
         'KEY_PREFIX': 'msa_mailer',
         'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': configure('cache.locations', ['localhost:6379']),
+        'LOCATION': configure('caches.locations', ['localhost:6379']),
         'OPTIONS': {
             'DB': 8,
             'PARSER_CLASS': 'redis.connection.HiredisParser',

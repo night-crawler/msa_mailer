@@ -4,7 +4,7 @@ db:
   engine: 'django.db.backends.postgresql'
   host: 'postgres'
   port: 5432
-  database: 'msa_mailer'
+  name: 'msa_mailer'
   user: 'msa_mailer'
   password: 'msa_mailer'
 
@@ -29,7 +29,7 @@ mail:
   password: 'Guess'
 
 # DJANGO CACHE
-cache:
+caches:
   locations:
     - 'redis:6379'
 
