@@ -19,14 +19,12 @@ pyaml
 hiredis
 django-redis-cache
 dpath
-gunicorn
 uwsgi
 django-uwsgi
 raven
 psycopg2-binary
 httpagentparser
 django-ipware
-whitenoise
 
 # logging
 structlog

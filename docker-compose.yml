@@ -14,15 +14,14 @@ services:
     volumes:
       - .:/application/msa_mailer
       - static:/application/msa_mailer/static
-    command: gunicorn
+    command: runuwsgi
     ports:
       - 21115:8000
     environment:
       CHECK_CONNECTIONS: 1
       RUN_PREPARE: 1  # run collectstatic & migrate
       DJANGO_CONFIG_FILE_NAME: within-docker.yml
-      GUNICORN_MODULE_NAME: gunicorn_prod
-      SERVE_STATIC: 1
+      UWSGI_STATIC_MAP: /static/=/application/msa_mailer/static
 
   msa-mailer-worker:
     image: ncrawler/msa_mailer:latest

@@ -95,7 +95,7 @@ INSTALLED_APPS = [
     'ckeditor',
     'ckeditor_uploader',
     'reversion',
-    # 'reversion_compare',
+    'django_uwsgi',
 
     'common',
     'frontend',
@@ -229,7 +229,7 @@ EMAIL_HOST_USER = configure('mail.user', 'example')
 EMAIL_HOST_PASSWORD = configure('mail.password', '')
 
 # --------------- BATTERIES ---------------
-DB_MAILER_ENABLE_LOGGING = configure('dbmailer.enable_logging', False)
+DB_MAILER_ENABLE_LOGGING = configure('dbmailer.enable_logging', True)
 DB_MAILER_READ_ONLY_ENABLED = configure('dbmailer.read_only_enabled', False)
 DB_MAILER_TRACK_ENABLE = configure('dbmailer.track_enable', True)
 DB_MAILER_USE_CELERY_FOR_ADMIN_TEST = configure('dbmailer.use_celery_for_admin_test', False)
@@ -275,13 +275,6 @@ CKEDITOR_CONFIGS = {
         'fullPage': True
     },
 }
-
-# SERVE STATIC
-if configure('SERVE_STATIC', False, coerce_type=bool):
-    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-
-    insert_idx = MIDDLEWARE_CLASSES.index('django.middleware.security.SecurityMiddleware') + 1
-    MIDDLEWARE_CLASSES[insert_idx:insert_idx] = ['whitenoise.middleware.WhiteNoiseMiddleware']
 
 
 # ======================================== LOGGING ========================================
